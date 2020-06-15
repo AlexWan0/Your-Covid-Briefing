@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Covid News Browser</title>
+	<link rel="stylesheet" href="https://unpkg.com/chota">
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+	<link rel='stylesheet' href="{{url_for('static', filename='progressbar.css') }}">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+	<meta name="viewport" content="width=device-width">
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+	<style type="text/css">
+		body{
+			font-family:Open Sans;
+			font-weight:400;
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+
+			width:100%;
+		}
+		.flex{
+			flex:1;
+			display: flex;
+			align-items: center;
+			flex-direction: column;
+			width:100%;
+			transition: flex 500ms;
+		}
+		.flex2{
+			flex:0;
+			display: flex;
+			align-items: center;
+			flex-direction: column;
+			height:100vh;
+			transition: flex 500ms;
+		}
+		.sidebar{
+			width:30vw;
+			display:none;
+			padding-top:40px;
+			border-left: 0.5px solid rgba(0,0,0,0.3);
+			padding-left:40px;
+			padding-right:40px;
+			height:100vh;
+			position:fixed;
+			overflow-y: scroll;
+			overflow-x: hidden;
+			background-color:white;
+		}
+		.search_cont{
+			width:80%;
+			margin-top:50px;
+			margin-bottom:50px;
+		}
+		table{
+			width:90%;
+			table-layout: fixed;
+		}
+		.title{
+			width:40%;
+		}
+		.neutrality{
+			width:18%;
+		}
+		tr{
+			border-bottom: 1px solid rgba(0,0,0,0.3);
+		}
+		td{
+			color:rgba(0,0,0,0.75);
+			font-size:15px;
+			cursor:pointer;
+			margin-top:10px;
+			-webkit-touch-callout: none; /* iOS Safari */
+			-webkit-user-select: none; /* Safari */
+			-khtml-user-select: none; /* Konqueror HTML */
+			-moz-user-select: none; /* Old versions of Firefox */
+			-ms-user-select: none; /* Internet Explorer/Edge */
+			user-select: none; /* Non-prefixed version, currently
+			                      supported by Chrome, Edge, Opera and Firefox */
+		}
+		th{
+			color:rgba(0,0,0,0.75);
+			font-size:15px;
+			cursor:pointer;
+			margin-top:10px;
+		}
+		th > div{
+			margin-left:20px;
+		}
+		.title_text{
+			width:80%;
+			height:40px;
+			overflow: hidden;
+			min-width: 0;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			margin-top: 19px;
+			margin-left: 20px;
+		}
+		.pub_text{
+			width:80%;
+			height:40px;
+			overflow: hidden;
+			min-width: 0;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			margin-top: 19px;
+		}
+		.progress_bar{
+			display: flex;
+		}
+		h1{
+			font-family:Open Sans;
+			font-size:25px;
+		}
+		.header{
+		    margin-top: 50px;
+		    font-size: 30px;
+		}
+		.briefing_link{
+			color: #333333;
+			font-weight: 300;
+		}
+		.sim_link{
+			padding-bottom:30px;
+		}
+		.x{
+			display:none;
+		}
+		.text_selected{
+			color: rgba(0,0,0,0.75);
+			font-weight: 600;
+		}
+		@media only screen and (max-width: 700px) {
+			.pubh{
+				display:none;
+			}
+			.bar_outer, .mask_rect{
+				width:13vw;
+			}
+			.sidebar{
+				border-left:0;
+				width:100vw;
+			}
+			.flex_hidden{
+				display:none;
+			}
+			.flex_visible{
+				display:flex;
+			}
+			.x{
+				display: block;
+				cursor: pointer;
+				position: absolute;
+				top: 12px;
+				left: 16px;
+				font-size: 20px;
+			}
+			.text_selected{
+				color: rgba(0,0,0,0.75);
+				font-weight: 400;
+			}
+			.flex{
+				transition:none !important;
+			}
+			.flex2{
+				transition:none !important;
+			}
+		}
+		@media only screen and (max-width: 400px) {
+			.dateh{
+				display:none;
+			}
+			.rth{
+				display:none;
+			}
+			.bar_outer, .mask_rect{
+				width:20vw;
+			}
+		}
+		th{
+			padding-right:20px;
+		}
+		.sidebar_hidden{
+			display:none;
+		}
+		.sidebar_visible{
+			display:block;
+		}
+		.flex2_hidden{
+			flex:0;
+		}
+		.flex2_visible{
+			flex:0.5;
+		}
+	</style>
+	<script>
+		$(function(){
+			var urlParams = new URLSearchParams(window.location.search);
+			var q = urlParams.get('q');
+
+			$('.search').focus();
+			$('.search').val(q);
+			$('.search_cont').submit(function(){
+				//alert('asdfaewfaef')
+				location.href = '/?q=' + $('.search').val();
+				return false;
+			});
+			$('.bar_inner').each(function(index, value){
+				var width = $(value).data('width');
+				
+				if(width < 0.30){
+					$(value).css('background-color', '#f01400');
+				}else if(width < 0.60){
+					$(value).css('background-color', '#f0c505');
+				}
+
+			});
+			var selected;
+			function hide(){
+				$(".sidebar").addClass('sidebar_hidden');
+				$(".sidebar").removeClass('sidebar_visible');
+				$('.flex2').addClass('flex2_hidden');
+				$('.flex2').removeClass('flex2_visible');
+				$('.flex').addClass('flex_visible');
+				$('.flex').removeClass('flex_hidden');
+				$(selected).children('td').each(function(index, value){
+					$(value).removeClass('text_selected');
+				});
+				selected = undefined;
+			}
+			$('td').click(function(){
+				if(selected){
+					$(selected).children('td').each(function(index, value){
+						$(value).removeClass('text_selected');
+					});
+				}
+				if(selected && selected.data('idx') == $(this).parent().data('idx')){
+					hide();
+					selected = undefined;
+				}else{
+					$(".sidebar").addClass('sidebar_visible');
+					$(".sidebar").removeClass('sidebar_hidden');
+					$('.flex2').addClass('flex2_visible');
+					$('.flex2').removeClass('flex2_hidden');
+					$('.flex').addClass('flex_hidden');
+					$('.flex').removeClass('flex_visible');
+
+					$(this).parent().children('td').each(function(index, value){
+						$(value).addClass('text_selected');
+					});
+					selected = $(this).parent();
+					$(".sidebar").html('<p><b>Summary: </b>Loading...</p>');
+					var idx = $(this).parent().data('idx');
+					var link =  $(this).parent().data('link');
+					$.get("/summary?idx=" + idx, function(data){
+						var sidebar_html = '<p class="x">x</p><h1>' + data['title'] + '</h1>';
+						sidebar_html += '<p><b>Summary: </b>' + data['summary'] + '<a href="' + link + '"> Source</a></p>';
+						sidebar_html += '<a class="sim_link" href="/?q=document:' + idx + '">View Similar</a>';
+						$(".sidebar").html(sidebar_html);
+						$('.x').click(function(){
+							hide();
+						});
+					});
+				}
+			});
+		});
+
+	</script>
+</head>
+<body>
+	<div class='flex'>
+		<p class='header' style="">Browse Articles</p>
+		<a class='briefing_link' href='/briefing'>Go to your briefing &gt;</a>
+		<form class='search_cont'>
+			<input class='search' type='text' spellcheck='false' autocomplete="off" placeholder="Search"></input>
+		</form>
+		<table>
+			<col class='title'>
+			<col class='publisher pubh'>
+			<col class='date dateh'>
+			<col class='read_time rth'>
+			<col class='neutrality'>
+			<tr>
+				<th><div>Title</div></th>
+				<th class='pubh'>Publisher</th>
+				<th class='dateh'>Date</th>
+				<th class='rth'>Read Time</th>
+				<th>Neutrality</th>
+			</tr>
+			{% for art in articles %}
+			<tr class='article_row' data-idx='{{ art["idx"] }}' data-link="{{ art['url'] }}">
+				<td class='flex_td'>
+					<div class='title_text'>
+						{{ art['title'] }}
+					</div>
+				<td class='pubh'>
+					<div class='pub_text'>
+						{{ art['publisher'] }}
+					</div>
+				</td>
+				<td class='dateh'>{{ art['date'] }}</td>
+				<td class='rth'>{{ art['read_time'] }} mins</td>
+				<td>
+					<div class='progress_bar'>
+						<div class='bar_outer'>
+							<div class='bar_inner' data-width='{{ 1-art["neutrality"] }}' style='width:{{ (1-art["neutrality"]) * 100 }}%;'>
+								<div class='mask_rect'>
+									<div class='mask_black'></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	<div class='flex2'>
+		<div class='sidebar'>
+			
+		</div>
+	</div>
+</body>
+</html>

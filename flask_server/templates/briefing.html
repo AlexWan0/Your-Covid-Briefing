@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Your Briefing</title>
+	<link rel="stylesheet" href="https://unpkg.com/chota">
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+	<meta name="viewport" content="width=device-width">
+	<style type="text/css">
+		body{
+			background-color:#fffefa;
+		}
+		h1{
+			color:#1c1c1c;
+			font-family: Times New Roman;
+			padding-left:60px;
+			padding-top:80px;
+			font-size:50px;
+			font-weight:400;
+			padding-right:50px;
+		}
+		label{
+			font-size:30px;
+			font-family: Times New Roman;
+			color:#1c1c1c;
+		}
+
+		input[type=number]::-webkit-inner-spin-button {
+			-webkit-appearance: none;
+		}
+		form{
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+
+			margin-top:100px;
+			display: flex;
+			flex-flow: row wrap;
+			align-content: center;
+			justify-content: center;
+
+			height:35vh;
+		}
+		input{
+			margin-left:10px;
+			margin-right:10px;
+			font-size:50px;
+		}
+		.sub{
+			font-family:Times New Roman;
+			font-size:20px;
+			font-weight:500;
+			padding-top:40px;
+			color:#1c1c1c;
+			cursor:pointer;
+		}
+		.next{
+			font-family:Times New Roman;
+			font-size:25px;
+			font-weight:500;
+			padding-top:30px;
+			color:#383838;;
+			cursor:pointer;
+			padding-bottom: 40px;
+		}
+		.back{
+			font-family:Times New Roman;
+			font-size:20px;
+			font-weight:500;
+			padding-top:20px;
+			padding-right:20px;
+			color:#1c1c1c;
+
+			position:absolute;
+			right:50px;
+		}
+		.line-break {
+			width: 100%;
+		}
+		.text{
+			margin-top:50px;
+			margin-left:80px;
+			margin-right:80px;
+			font-size:30px;
+			font-family:Times New Roman;
+			color:#383838;
+			display:none;
+		}
+		.next_cont{
+			text-align:center;
+			display:none;
+		}
+		@media only screen and (max-width: 700px) {
+			.title_cont{
+				text-align:center;
+			}
+			.text{
+				font-size: 18px;
+				margin-left: 20px;
+				margin-right: 20px;
+			}
+			.smallmode{
+				font-size: 30px;
+			}
+		}
+	</style>
+	<script>
+		$(function(){
+			var animlen = 500;
+			function loop_articles(data){
+				var idx = $('.text').data('idx');
+
+				if((idx + 1) >= data.length){
+					$('.next').text('Done');
+				}
+
+				$('h1').text(data[idx]['title']);
+				$('h1').addClass('smallmode');
+
+				$('.text').html(data[idx]['summary'] + '<a href="' + data[idx]['url'] + '"> Source</a>');
+
+				$("html, body").scrollTop();
+
+				$('h1').fadeIn(animlen);
+				$('.text').fadeIn(animlen);
+				$('.next_cont').fadeIn(animlen);
+
+				$('.next').click(function(){
+					if((idx + 1) >= data.length){
+						location.href = '/';
+					}else{
+						$('h1').fadeOut(animlen);
+						$('.text').fadeOut(animlen);
+						$('.next_cont').fadeOut(animlen, function(){
+							$('.text').data('idx', idx + 1);
+							loop_articles(data);
+						});
+					}
+					
+				});
+			}
+			function submit(){
+				$.get("/getbrief?t=" + $('.sub_cont').val(), function(data){
+					$('h1').fadeOut(animlen);
+					$('form').fadeOut(animlen, function(){
+						$('.next_cont').append("<p class='next'>Next ></p>");
+						loop_articles(data);
+					});
+				});
+			}
+			$('form').submit(function(){
+				submit();
+				return false;
+			});
+			$('.sub').click(function(){
+				submit();
+				return false;
+			});
+		});
+	</script>
+</head>
+<body>
+	<a class='back' href='/'>< Back</a>
+	<div class='title_cont'>
+		<h1>Your Covid Briefing</h1>
+	</div>
+	<form>
+		<label>I have </label>
+		<input class='sub_cont' type='number' style='width:50px;font-family: Times New Roman;font-size: 25px;color: #575757;'>
+		<label> minutes</label>
+		<div class="line-break"></div>
+		<p class='sub'>Next ></p>
+	</form>
+	<p class='text' data-idx=0>
+	</p>
+	<div class='next_cont'>
+	</div>
+</body>
+</html>

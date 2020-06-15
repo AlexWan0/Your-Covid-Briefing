@@ -1,0 +1,26 @@
+.bar_inner{
+	height:100%;
+	border-radius: 0 100px 100px 0;
+	transition: width 500ms linear;
+	background-color:#04E762;
+	width:0;
+}
+.bar_outer{
+	background-color:#e8e8e8;
+	width:8vw;
+	height:15px;
+}
+.mask_rect{
+	width:8vw;
+	height:15px;
+	background-color:white;
+	mix-blend-mode: screen;
+	outline: 10px solid white;
+}
+.mask_black{
+	width:100%;
+	height:100%;
+	background-color:black;
+	border-radius: 100px;
+	height:100%;
+}
